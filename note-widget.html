@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aesthetic Sticky Note</title>
+  
+  <!-- Load Tiro Tamil font -->
+  <link href="https://fonts.cdnfonts.com/css/tiro-tamil" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Tiro Tamil', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #fbefff, #e6faff);
+      transition: background 0.3s, color 0.3s;
+      color: #000;
+    }
+
+    body.dark-mode {
+      background: linear-gradient(135deg, #1e1e1e, #2e2e2e);
+      color: #f5f5f5;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .color-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .color-button {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .color-button:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    }
+
+    .text-size select, .font-select select {
+      font-size: 14px;
+      padding: 2px 6px;
+    }
+
+    .sticky-note {
+      width: 300px;
+      padding: 20px;
+      background-color: #ffe6e6;
+      border-radius: 15px;
+      box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.15);
+      transition: background-color 0.3s, color 0.3s;
+      color: #000; /* default text */
+    }
+
+    body.dark-mode .sticky-note {
+      color: #f5f5f5;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      resize: none;
+      outline: none;
+      background-color: transparent;
+      font-size: 16px;
+      font-family: inherit;
+      color: inherit;
+    }
+
+    input[type="range"], select {
+      cursor: pointer;
+    }
+
+    /* Dark mode button */
+    .mode-toggle {
+      cursor: pointer;
+      font-size: 22px;
+      border: none;
+      background: none;
+    }
+
+    /* Dark Mode Color Buttons (muted) */
+    body.dark-mode .color-button[style*="#ffe6e6"] { background-color: #b87373 !important; }
+    body.dark-mode .color-button[style*="#e6f7ff"] { background-color: #6ba0b8 !important; }
+    body.dark-mode .color-button[style*="#e6ffe6"] { background-color: #6d9d75 !important; }
+    body.dark-mode .color-button[style*="#fff0e6"] { background-color: #b48a73 !important; }
+    body.dark-mode .color-button[style*="#ffebcc"] { background-color: #b89a6d !important; }
+    body.dark-mode .color-button[style*="#e6ccff"] { background-color: #8a73b8 !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="controls">
+      <!-- Top Row -->
+      <div class="top-row">
+        <!-- Dark/Light Mode Toggle (icon only) -->
+        <button class="mode-toggle" id="modeToggle">🌙</button>
+
+        <!-- Font Selector -->
+        <div class="font-select">
+          <select id="fontSelector">
+            <option value="'Tiro Tamil', sans-serif">Normal</option>
+            <option value="'Tiro Tamil', sans-serif; font-style:italic">Italic</option>
+          </select>
+        </div>
+
+        <!-- Font Size -->
+        <div class="text-size">
+          <input type="range" min="14" max="26" value="16" id="textSizeSlider">
+        </div>
+      </div>
+
+      <!-- Second Row: Colors -->
+      <div class="color-buttons">
+        <button class="color-button" style="background-color: #ffe6e6" onclick="changeColor('#ffe6e6', '#000')"></button>
+        <button class="color-button" style="background-color: #e6f7ff" onclick="changeColor('#e6f7ff', '#000')"></button>
+        <button class="color-button" style="background-color: #e6ffe6" onclick="changeColor('#e6ffe6', '#000')"></button>
+        <button class="color-button" style="background-color: #fff0e6" onclick="changeColor('#fff0e6', '#000')"></button>
+        <button class="color-button" style="background-color: #ffebcc" onclick="changeColor('#ffebcc', '#000')"></button>
+        <button class="color-button" style="background-color: #e6ccff" onclick="changeColor('#e6ccff', '#000')"></button>
+      </div>
+    </div>
+
+    <!-- Sticky Note -->
+    <div class="sticky-note" id="stickyNote">
+      <textarea id="noteText" placeholder="Write your notes here..."></textarea>
+    </div>
+  </div>
+
+  <script>
+    const note = document.getElementById('noteText');
+    const slider = document.getElementById('textSizeSlider');
+    const fontSelector = document.getElementById('fontSelector');
+    const modeToggle = document.getElementById('modeToggle');
+    const stickyNote = document.getElementById('stickyNote');
+
+    // Dark mode color mapping
+    const darkColors = {
+      "#ffe6e6": "#b87373",
+      "#e6f7ff": "#6ba0b8",
+      "#e6ffe6": "#6d9d75",
+      "#fff0e6": "#b48a73",
+      "#ffebcc": "#b89a6d",
+      "#e6ccff": "#8a73b8"
+    };
+
+    function changeColor(color, textColor) {
+      const isDark = document.body.classList.contains('dark-mode');
+      const appliedColor = isDark && darkColors[color] ? darkColors[color] : color;
+
+      stickyNote.style.backgroundColor = appliedColor;
+      stickyNote.style.color = textColor;
+      note.style.color = textColor;
+
+      localStorage.setItem('noteColor', color);
+      localStorage.setItem('noteTextColor', textColor);
+    }
+
+    slider.addEventListener('input', () => {
+      note.style.fontSize = slider.value + 'px';
+      localStorage.setItem('noteFontSize', slider.value);
+    });
+
+    fontSelector.addEventListener('change', () => {
+      const selectedFont = fontSelector.value;
+      if (selectedFont.includes("italic")) {
+        note.style.fontFamily = "'Tiro Tamil', sans-serif";
+        note.style.fontStyle = "italic";
+        document.body.style.fontFamily = "'Tiro Tamil', sans-serif";
+        document.body.style.fontStyle = "italic";
+      } else {
+        note.style.fontFamily = "'Tiro Tamil', sans-serif";
+        note.style.fontStyle = "normal";
+        document.body.style.fontFamily = "'Tiro Tamil', sans-serif";
+        document.body.style.fontStyle = "normal";
+      }
+      localStorage.setItem('noteFontFamily', selectedFont);
+    });
+
+    note.addEventListener('input', () => {
+      localStorage.setItem('noteContent', note.value);
+    });
+
+    // Dark mode toggle (icon only)
+    modeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      modeToggle.textContent = isDark ? "☀️" : "🌙";
+      localStorage.setItem('darkMode', isDark ? "enabled" : "disabled");
+
+      // Reapply correct color
+      const savedColor = localStorage.getItem('noteColor');
+      const savedTextColor = localStorage.getItem('noteTextColor') || "#000";
+      if (savedColor) {
+        changeColor(savedColor, savedTextColor);
+      }
+    });
+
+    window.onload = () => {
+      note.value = localStorage.getItem('noteContent') || '';
+
+      const savedColor = localStorage.getItem('noteColor');
+      const savedTextColor = localStorage.getItem('noteTextColor') || "#000";
+      if (savedColor) {
+        changeColor(savedColor, savedTextColor);
+      }
+
+      const savedSize = localStorage.getItem('noteFontSize');
+      if (savedSize) {
+        slider.value = savedSize;
+        note.style.fontSize = savedSize + 'px';
+      }
+
+      const savedFont = localStorage.getItem('noteFontFamily');
+      if (savedFont) {
+        if (savedFont.includes("italic")) {
+          note.style.fontFamily = "'Tiro Tamil', sans-serif";
+          note.style.fontStyle = "italic";
+          document.body.style.fontFamily = "'Tiro Tamil', sans-serif";
+          document.body.style.fontStyle = "italic";
+          fontSelector.value = "'Tiro Tamil', sans-serif; font-style:italic";
+        } else {
+          note.style.fontFamily = "'Tiro Tamil', sans-serif";
+          note.style.fontStyle = "normal";
+          document.body.style.fontFamily = "'Tiro Tamil', sans-serif";
+          document.body.style.fontStyle = "normal";
+          fontSelector.value = "'Tiro Tamil', sans-serif";
+        }
+      }
+
+      const savedMode = localStorage.getItem('darkMode');
+      if (savedMode === "enabled") {
+        document.body.classList.add('dark-mode');
+        modeToggle.textContent = "☀️";
+
+        const savedColor = localStorage.getItem('noteColor');
+        if (savedColor) {
+          changeColor(savedColor, savedTextColor);
+        }
+      }
+    };
+  </script>
+</body>
+</html>
