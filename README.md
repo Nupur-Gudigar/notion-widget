@@ -1,4 +1,4 @@
-# 📝 Aesthetic Sticky Notes Widget
+# 📝 Note Widget
 
 A simple sticky notes widget made with **HTML, CSS, and JavaScript**.  
 Supports dark/light mode, font customization, note colors, and auto-save using `localStorage`.
